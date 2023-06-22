@@ -30,8 +30,8 @@ class Login extends Component {
       this.validateLogin();
     });
   };
-  
-    handleSubmit = async (event) => {
+
+  handleSubmit = async (event) => {
     event.preventDefault();
 
     const API_URL = 'https://opentdb.com/api_token.php?command=request';
