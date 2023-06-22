@@ -45,35 +45,47 @@ class Login extends Component {
 
   render() {
     const { isDisabled } = this.state;
+    const { history } = this.props;
 
     return (
-      <form onSubmit={ this.validateLogin }>
-        <input
-          type="email"
-          name="email"
-          placeholder="e-mail"
-          data-testid="input-gravatar-email"
-          onChange={ this.handleChange }
-        />
+      <>
+        <form onSubmit={ this.validateLogin }>
+          <input
+            type="email"
+            name="email"
+            placeholder="e-mail"
+            data-testid="input-gravatar-email"
+            onChange={ this.handleChange }
+          />
 
-        <input
-          type="text"
-          name="userName"
-          placeholder="Digite seu nome"
-          data-testid="input-player-name"
-          onChange={ this.handleChange }
-        />
+          <input
+            type="text"
+            name="userName"
+            placeholder="Digite seu nome"
+            data-testid="input-player-name"
+            onChange={ this.handleChange }
+          />
+
+          <button
+            disabled={ isDisabled }
+            type="submit"
+            name="submit-btn"
+            data-testid="btn-play"
+            onClick={ this.handleSubmit }
+          >
+            Play
+          </button>
+
+        </form>
 
         <button
-          disabled={ isDisabled }
-          type="submit"
-          name="submit-btn"
-          data-testid="btn-play"
-          onClick={ this.handleSubmit }
+          type="button"
+          data-testid="btn-settings"
+          onClick={ () => history.push('/settings') }
         >
-          Play
+          Configurações
         </button>
-      </form>
+      </>
     );
   }
 }
