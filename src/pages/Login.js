@@ -30,6 +30,18 @@ class Login extends Component {
       this.validateLogin();
     });
   };
+  
+    handleSubmit = async (event) => {
+    event.preventDefault();
+
+    const API_URL = 'https://opentdb.com/api_token.php?command=request';
+    const response = await fetch(API_URL);
+    const { token } = await response.json();
+    const { history } = this.props;
+
+    localStorage.setItem('token', token);
+    history.push('/game');
+  };
 
   render() {
     const { isDisabled } = this.state;
@@ -59,6 +71,7 @@ class Login extends Component {
             type="submit"
             name="submit-btn"
             data-testid="btn-play"
+            onClick={ this.handleSubmit }
           >
             Play
           </button>
