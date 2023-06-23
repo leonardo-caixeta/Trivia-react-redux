@@ -1,8 +1,11 @@
-import { SET_EMAIL, SET_NAME } from '../actions/index';
+import { SET_EMAIL, SET_NAME, SET_SCORE } from '../actions/index';
 
+// muda o nome das propriedades do estado global player, adequando conforme especificações do readme
 const INITIAL_STATE = {
-  email: '',
   name: '',
+  assertions: 0,
+  score: 0,
+  gravatarEmail: '',
 };
 
 const player = (state = INITIAL_STATE, action) => {
@@ -10,13 +13,19 @@ const player = (state = INITIAL_STATE, action) => {
   case SET_EMAIL:
     return {
       ...state,
-      email: action.payload,
+      gravatarEmail: action.payload,
     };
 
   case SET_NAME:
     return {
       ...state,
       name: action.payload,
+    };
+
+  case SET_SCORE:
+    return {
+      ...state,
+      score: action.payload,
     };
 
   default:
