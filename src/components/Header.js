@@ -6,9 +6,7 @@ import md5 from 'crypto-js/md5';
 class Header extends Component {
   render() {
     const { playerName, score, email } = this.props;
-
     const hashEmail = md5(email).toString();
-
     const gravatarEmail = `https://www.gravatar.com/avatar/${hashEmail}`;
 
     return (

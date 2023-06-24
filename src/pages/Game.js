@@ -6,7 +6,9 @@ import Header from '../components/Header';
 class Game extends Component {
   state = {
     questions: [],
+    shuffledAnswers: [],
     index: 0,
+    isAnswered: false,
   };
 
   componentDidMount() {
@@ -19,7 +21,6 @@ class Game extends Component {
 
     if (!token) {
       history.push('/');
-      localStorage.removeItem('token');
     } else {
       const API_URL = `https://opentdb.com/api.php?amount=5&token=${token}`;
       const RESPONSE_CODE = 3;
@@ -27,25 +28,38 @@ class Game extends Component {
       const data = await response.json();
 
       if (data.response_code === RESPONSE_CODE) {
-        history.push('/');
         localStorage.removeItem('token');
+        history.push('/');
       } else {
+        const questions = data.results;
+        const question = questions[0];
+
+        const answers = (question)
+          ? [...question.incorrect_answers, question.correct_answer]
+          : [];
+
+        const RANDOM_INCREMENT = 0.5;
+        const shuffledAnswers = answers.sort(() => Math.random() - RANDOM_INCREMENT);
+
         this.setState(() => ({
-          questions: data.results,
+          questions,
+          shuffledAnswers,
+          index: 0,
+          isAnswered: false,
         }));
       }
     }
   };
 
-  render() {
-    const { questions, index } = this.state;
-    const question = questions[index];
-    const answers = (question)
-      ? [...question.incorrect_answers, question.correct_answer]
-      : [];
+  handleAnswer = () => {
+    this.setState({
+      isAnswered: true,
+    });
+  };
 
-    const randomNumber = 0.5;
-    const shuffle = answers.sort(() => Math.random() - randomNumber);
+  render() {
+    const { questions, shuffledAnswers, index, isAnswered } = this.state;
+    const question = questions[index];
 
     return (
       <div className="game">
@@ -56,33 +70,38 @@ class Game extends Component {
           && (
             <>
               <div className="question-category">
-                <h1 data-testid="question-category">{question.category}</h1>
-              </div>
-              <div className="question">
-                <h2 data-testid="question-text">{question.question}</h2>
+                <h1 data-testid="question-category">{ question.category }</h1>
               </div>
 
-              {
-                shuffle
-                  .map((answer, answerIndex) => {
-                    const testId = (answer === question.correct_answer)
-                      ? 'correct-answer'
-                      : `wrong-answer-${answerIndex}`;
+              <div className="question-text">
+                <h2 data-testid="question-text">{ question.question }</h2>
+              </div>
 
-                    return (
-                      <div
-                        data-testid="answer-options"
-                        key={ answerIndex }
-                      >
+              <div data-testid="answer-options">
+                {
+                  shuffledAnswers
+                    .map((answer, answerIndex) => {
+                      const answerDataTestId = (answer === question.correct_answer)
+                        ? 'correct-answer'
+                        : `wrong-answer-${answerIndex}`;
+
+                      const answerClassName = (answer === question.correct_answer)
+                        ? 'green-border'
+                        : 'red-border';
+
+                      return (
                         <button
-                          data-testid={ testId }
+                          data-testid={ answerDataTestId }
+                          key={ answerIndex }
+                          className={ (isAnswered) ? answerClassName : '' }
+                          onClick={ this.handleAnswer }
                         >
-                          {answer}
+                          { answer }
                         </button>
-                      </div>
-                    );
-                  })
-              }
+                      );
+                    })
+                }
+              </div>
             </>
           )
         }
