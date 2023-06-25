@@ -7,12 +7,15 @@ class Game extends Component {
   state = {
     questions: [],
     shuffledAnswers: [],
-    index: 0,
+    timerId: null,
+    timerDuration: 0,
+    questionIndex: 0,
     isAnswered: false,
   };
 
   componentDidMount() {
     this.fetchQuestions();
+    this.handleTimer();
   }
 
   fetchQuestions = async () => {
@@ -44,22 +47,78 @@ class Game extends Component {
         this.setState(() => ({
           questions,
           shuffledAnswers,
-          index: 0,
+          questionIndex: 0,
           isAnswered: false,
         }));
       }
     }
   };
 
+  handleTimer = () => {
+    const { timerId } = this.state;
+
+    if (timerId !== null) {
+      clearInterval(timerId);
+
+      this.setState({
+        timerId: null,
+      });
+    }
+
+    this.setState({
+      timerDuration: 30,
+    }, () => {
+      const INTERVAL_INCREMENT = 1000;
+
+      const intervalId = setInterval(() => {
+        const { timerDuration } = this.state;
+
+        if (timerDuration > 0) {
+          this.setState((prevState) => ({
+            timerDuration: prevState.timerDuration - 1,
+          }));
+        } else {
+          clearInterval(intervalId);
+        }
+      }, 1.0 * INTERVAL_INCREMENT);
+
+      this.setState({
+        timerId: intervalId,
+      });
+    });
+  };
+
   handleAnswer = () => {
+    const { timerId } = this.state;
+
+    if (timerId !== null) {
+      clearInterval(timerId);
+
+      this.setState({
+        timerId: null,
+        timerDuration: 0,
+      });
+    }
+
     this.setState({
       isAnswered: true,
     });
   };
 
   render() {
-    const { questions, shuffledAnswers, index, isAnswered } = this.state;
-    const question = questions[index];
+    const {
+      questions,
+      shuffledAnswers,
+      timerDuration,
+      questionIndex,
+      isAnswered,
+    } = this.state;
+
+    const FIXED_NUMBER = 10;
+    const question = questions[questionIndex];
+    const formattedTimerDuration = (timerDuration < FIXED_NUMBER)
+      ? `0${timerDuration}`
+      : timerDuration;
 
     return (
       <div className="game">
@@ -75,6 +134,10 @@ class Game extends Component {
 
               <div className="question-text">
                 <h2 data-testid="question-text">{ question.question }</h2>
+              </div>
+
+              <div>
+                <h3>{ formattedTimerDuration }</h3>
               </div>
 
               <div data-testid="answer-options">
@@ -94,6 +157,7 @@ class Game extends Component {
                           data-testid={ answerDataTestId }
                           key={ answerIndex }
                           className={ (isAnswered) ? answerClassName : '' }
+                          disabled={ (timerDuration <= 0) }
                           onClick={ this.handleAnswer }
                         >
                           { answer }

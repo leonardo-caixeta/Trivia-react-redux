@@ -1,4 +1,9 @@
-import { SET_EMAIL, SET_NAME, SET_SCORE } from '../actions/index';
+import {
+  SET_EMAIL,
+  SET_NAME,
+  SET_SCORE,
+  SET_TIMER,
+} from '../actions/index';
 
 // muda o nome das propriedades do estado global player, adequando conforme especificações do readme
 const INITIAL_STATE = {
@@ -6,6 +11,7 @@ const INITIAL_STATE = {
   assertions: 0,
   score: 0,
   gravatarEmail: '',
+  timer: false,
 };
 
 const player = (state = INITIAL_STATE, action) => {
@@ -26,6 +32,12 @@ const player = (state = INITIAL_STATE, action) => {
     return {
       ...state,
       score: action.payload,
+    };
+
+  case SET_TIMER:
+    return {
+      ...state,
+      timer: action.payload,
     };
 
   default:
