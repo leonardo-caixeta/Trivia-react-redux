@@ -5,17 +5,17 @@ import { setEmailAction, setNameAction } from '../redux/actions/index';
 
 class Login extends Component {
   state = {
-    email: '',
+    userEmail: '',
     userName: '',
     isDisabled: true,
   };
 
   validateLogin = () => {
-    const { email, userName } = this.state;
-    const isEmailValid = email.length > 0;
+    const { userEmail, userName } = this.state;
+    const isUserEmailValid = userEmail.length > 0;
     const isUserNameValid = userName.length > 0;
-    const isValid = isEmailValid && isUserNameValid;
-    const isDisabled = !isValid;
+    const isLoginValid = isUserEmailValid && isUserNameValid;
+    const isDisabled = !isLoginValid;
 
     this.setState({
       isDisabled,
@@ -38,16 +38,16 @@ class Login extends Component {
     const API_URL = 'https://opentdb.com/api_token.php?command=request';
     const response = await fetch(API_URL);
     const { token } = await response.json();
-    const { email, userName } = this.state;
+    const { userEmail, userName } = this.state;
     const { history, dispatch } = this.props;
 
-    dispatch(setEmailAction(email));
+    dispatch(setEmailAction(userEmail));
     dispatch(setNameAction(userName));
     localStorage.setItem('token', token);
     history.push('/game');
 
     this.setState({
-      email: '',
+      userEmail: '',
       userName: '',
     });
   };
@@ -60,26 +60,26 @@ class Login extends Component {
       <>
         <form onSubmit={ this.validateLogin }>
           <input
-            type="email"
-            name="email"
-            placeholder="e-mail"
             data-testid="input-gravatar-email"
+            type="email"
+            name="userEmail"
+            placeholder="e-mail"
             onChange={ this.handleChange }
           />
 
           <input
+            data-testid="input-player-name"
             type="text"
             name="userName"
             placeholder="Digite seu nome"
-            data-testid="input-player-name"
             onChange={ this.handleChange }
           />
 
           <button
-            disabled={ isDisabled }
+            data-testid="btn-play"
             type="submit"
             name="submit-btn"
-            data-testid="btn-play"
+            disabled={ isDisabled }
             onClick={ this.handleSubmit }
           >
             Play
@@ -88,11 +88,11 @@ class Login extends Component {
         </form>
 
         <button
-          type="button"
           data-testid="btn-settings"
+          type="button"
           onClick={ () => history.push('/settings') }
         >
-          Configurações
+          Settings
         </button>
       </>
     );
