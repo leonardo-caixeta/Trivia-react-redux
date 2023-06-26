@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { setScoreAction } from '../redux/actions';
+import { setScoreAction, setassertionsAction } from '../redux/actions';
 import Header from '../components/Header';
 
 class Game extends Component {
@@ -36,22 +36,31 @@ class Game extends Component {
         history.push('/');
       } else {
         const questions = data.results;
-        const question = questions[0];
-        const answers = (question)
-          ? [...question.incorrect_answers, question.correct_answer]
-          : [];
-
-        const RANDOM_INCREMENT = 0.5;
-        const shuffledAnswers = answers.sort(() => Math.random() - RANDOM_INCREMENT);
 
         this.setState(() => ({
           questions,
-          shuffledAnswers,
           questionIndex: 0,
           isAnswered: false,
-        }));
+        }), () => {
+          this.shuffleAnswers();
+        });
       }
     }
+  };
+
+  shuffleAnswers = () => {
+    const { questions, questionIndex } = this.state;
+    const question = questions[questionIndex];
+    const answers = (question)
+      ? [...question.incorrect_answers, question.correct_answer]
+      : [];
+
+    const RANDOM_INCREMENT = 0.5;
+    const shuffledAnswers = answers.sort(() => Math.random() - RANDOM_INCREMENT);
+
+    this.setState({
+      shuffledAnswers,
+    });
   };
 
   handleTimer = () => {
@@ -108,13 +117,14 @@ class Game extends Component {
 
     if (question && target.id === 'correct-answer') {
       const { timerDuration } = this.state;
-      const { dispatch, score } = this.props;
+      const { dispatch, score, assertions } = this.props;
       const SCORE_INCREMENT = 10;
       const difficulties = { easy: 1, medium: 2, hard: 3 };
       const difficulty = difficulties[question.difficulty];
       const newScore = score + (SCORE_INCREMENT + (timerDuration * difficulty));
 
       dispatch(setScoreAction(newScore));
+      dispatch(setassertionsAction(assertions + 1));
     }
 
     this.setState({
@@ -123,13 +133,18 @@ class Game extends Component {
   };
 
   handleNext = () => {
-    const { isAnswered } = this.state;
+    const { questions, questionIndex, isAnswered } = this.state;
+    const lastQuestionIndex = questions.length - 1;
 
-    if (isAnswered) {
+    if (questionIndex === lastQuestionIndex) {
+      const { history } = this.props;
+      history.push('/feedback');
+    } else if (isAnswered) {
       this.setState((prevState) => ({
         questionIndex: prevState.questionIndex + 1,
         isAnswered: false,
       }), () => {
+        this.shuffleAnswers();
         this.handleTimer();
       });
     }
@@ -205,7 +220,7 @@ class Game extends Component {
                     data-testid="btn-next"
                     onClick={ this.handleNext }
                   >
-                    Next
+                    Próxima
                   </button>
                 )
               }
@@ -218,13 +233,14 @@ class Game extends Component {
 }
 
 const mapStateToProps = ({ player }) => {
-  const { score } = player;
-  return { score };
+  const { score, assertions } = player;
+  return { score, assertions };
 };
 
 Game.propTypes = {
   dispatch: PropTypes.func.isRequired,
   score: PropTypes.number.isRequired,
+  assertions: PropTypes.number.isRequired,
   history: PropTypes.shape({
     push: PropTypes.func.isRequired,
   }).isRequired,
