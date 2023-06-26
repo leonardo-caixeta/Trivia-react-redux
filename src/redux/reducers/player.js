@@ -2,6 +2,7 @@ import {
   SET_EMAIL,
   SET_NAME,
   SET_SCORE,
+  SET_ASSERTIONS,
 } from '../actions/index';
 
 // muda o nome das propriedades do estado global player,
@@ -32,6 +33,12 @@ const player = (state = INITIAL_STATE, action) => {
     return {
       ...state,
       score: action.payload,
+    };
+
+  case SET_ASSERTIONS:
+    return {
+      ...state,
+      assertions: action.payload,
     };
 
   default:

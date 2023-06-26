@@ -1,6 +1,7 @@
 export const SET_EMAIL = 'SET_EMAIL';
 export const SET_NAME = 'SET_NAME';
 export const SET_SCORE = 'SET_SCORE';
+export const SET_ASSERTIONS = 'SET_ASSERTIONS';
 
 export const setEmailAction = (gravatarEmail) => ({
   type: SET_EMAIL,
@@ -16,4 +17,9 @@ export const setNameAction = (name) => ({
 export const setScoreAction = (score) => ({
   type: SET_SCORE,
   payload: score,
+});
+
+export const setassertionsAction = (assertions) => ({
+  type: SET_ASSERTIONS,
+  payload: assertions,
 });
