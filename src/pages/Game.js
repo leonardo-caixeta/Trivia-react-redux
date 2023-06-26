@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import { setScoreAction } from '../redux/actions';
 import Header from '../components/Header';
 
 class Game extends Component {
@@ -57,16 +58,14 @@ class Game extends Component {
   handleTimer = () => {
     const { timerId } = this.state;
 
-    if (timerId !== null) {
+    if (timerId) {
       clearInterval(timerId);
-
-      this.setState({
-        timerId: null,
-      });
+      this.setState({ timerId: null });
     }
 
     this.setState({
       timerDuration: 30,
+      isAnswered: false,
     }, () => {
       const INTERVAL_INCREMENT = 1000;
 
@@ -79,8 +78,14 @@ class Game extends Component {
           }));
         } else {
           clearInterval(intervalId);
+
+          this.setState({
+            timerId: null,
+            timerDuration: 0,
+            isAnswered: true,
+          });
         }
-      }, 1.0 * INTERVAL_INCREMENT);
+      }, INTERVAL_INCREMENT);
 
       this.setState({
         timerId: intervalId,
@@ -88,10 +93,16 @@ class Game extends Component {
     });
   };
 
-  handleAnswer = () => {
-    const { timerId } = this.state;
+  handleAnswer = ({ target }) => {
+    const {
+      questions,
+      timerId,
+      questionIndex,
+    } = this.state;
 
-    if (timerId !== null) {
+    const question = questions[questionIndex];
+
+    if (timerId) {
       clearInterval(timerId);
 
       this.setState({
@@ -100,9 +111,39 @@ class Game extends Component {
       });
     }
 
+    if (question && target.id === 'correct-answer') {
+      const { timerDuration } = this.state;
+      const { dispatch, score } = this.props;
+      const SCORE_INCREMENT = 10;
+
+      const difficulties = {
+        easy: 1,
+        medium: 2,
+        hard: 3,
+      };
+
+      const difficulty = difficulties[question.difficulty];
+      const newScore = score + (SCORE_INCREMENT + (timerDuration * difficulty));
+
+      dispatch(setScoreAction(newScore));
+    }
+
     this.setState({
       isAnswered: true,
     });
+  };
+
+  handleNext = () => {
+    const { isAnswered } = this.state;
+
+    if (isAnswered) {
+      this.setState((prevState) => ({
+        questionIndex: prevState.questionIndex + 1,
+        isAnswered: false,
+      }), () => {
+        this.handleTimer();
+      });
+    }
   };
 
   render() {
@@ -144,7 +185,7 @@ class Game extends Component {
                 {
                   shuffledAnswers
                     .map((answer, answerIndex) => {
-                      const answerDataTestId = (answer === question.correct_answer)
+                      const answerId = (answer === question.correct_answer)
                         ? 'correct-answer'
                         : `wrong-answer-${answerIndex}`;
 
@@ -154,10 +195,11 @@ class Game extends Component {
 
                       return (
                         <button
-                          data-testid={ answerDataTestId }
+                          data-testid={ answerId }
                           key={ answerIndex }
+                          id={ answerId }
                           className={ (isAnswered) ? answerClassName : '' }
-                          disabled={ (timerDuration <= 0) }
+                          disabled={ isAnswered }
                           onClick={ this.handleAnswer }
                         >
                           { answer }
@@ -166,6 +208,13 @@ class Game extends Component {
                     })
                 }
               </div>
+
+              <button
+                data-testid="btn-next"
+                onClick={ this.handleNext }
+              >
+                Next
+              </button>
             </>
           )
         }
@@ -174,10 +223,17 @@ class Game extends Component {
   }
 }
 
+const mapStateToProps = ({ player }) => {
+  const { score } = player;
+  return { score };
+};
+
 Game.propTypes = {
+  dispatch: PropTypes.func.isRequired,
+  score: PropTypes.number.isRequired,
   history: PropTypes.shape({
     push: PropTypes.func.isRequired,
   }).isRequired,
 };
 
-export default connect()(Game);
+export default connect(mapStateToProps)(Game);
