@@ -37,7 +37,6 @@ class Game extends Component {
       } else {
         const questions = data.results;
         const question = questions[0];
-
         const answers = (question)
           ? [...question.incorrect_answers, question.correct_answer]
           : [];
@@ -104,24 +103,14 @@ class Game extends Component {
 
     if (timerId) {
       clearInterval(timerId);
-
-      this.setState({
-        timerId: null,
-        timerDuration: 0,
-      });
+      this.setState({ timerId: null, timerDuration: 0 });
     }
 
     if (question && target.id === 'correct-answer') {
       const { timerDuration } = this.state;
       const { dispatch, score } = this.props;
       const SCORE_INCREMENT = 10;
-
-      const difficulties = {
-        easy: 1,
-        medium: 2,
-        hard: 3,
-      };
-
+      const difficulties = { easy: 1, medium: 2, hard: 3 };
       const difficulty = difficulties[question.difficulty];
       const newScore = score + (SCORE_INCREMENT + (timerDuration * difficulty));
 
@@ -209,12 +198,17 @@ class Game extends Component {
                 }
               </div>
 
-              <button
-                data-testid="btn-next"
-                onClick={ this.handleNext }
-              >
-                Next
-              </button>
+              {
+                (isAnswered)
+                && (
+                  <button
+                    data-testid="btn-next"
+                    onClick={ this.handleNext }
+                  >
+                    Next
+                  </button>
+                )
+              }
             </>
           )
         }
