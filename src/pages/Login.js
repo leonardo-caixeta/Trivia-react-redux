@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { setEmailAction, setNameAction } from '../redux/actions/index';
+import { setEmailAction,
+  setNameAction,
+  setScoreAction,
+  setassertionsAction } from '../redux/actions/index';
 
 class Login extends Component {
   state = {
@@ -43,6 +46,8 @@ class Login extends Component {
 
     dispatch(setEmailAction(userEmail));
     dispatch(setNameAction(userName));
+    dispatch(setassertionsAction(0));
+    dispatch(setScoreAction(0));
     localStorage.setItem('token', token);
     history.push('/game');
 
