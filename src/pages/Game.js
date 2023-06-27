@@ -1,169 +1,130 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { setScoreAction, setassertionsAction } from '../redux/actions';
+
+import {
+  setScoreAction,
+  setAssertionsAction,
+  setTimerRefreshAction,
+  setGameAnsweredAction,
+  resetTimerAction,
+  resetGameAction,
+} from '../redux/actions/index';
+
+import { fetchQuestionsFromAPI } from '../services/triviaAPI';
 import Header from '../components/Header';
+import Timer from '../components/Timer';
 
 class Game extends Component {
   state = {
     questions: [],
-    shuffledAnswers: [],
-    timerId: null,
-    timerDuration: 0,
+    answers: [],
     questionIndex: 0,
-    isAnswered: false,
   };
 
   componentDidMount() {
+    const { dispatch } = this.props;
+
+    dispatch(resetGameAction());
+    this.validateLogin();
     this.fetchQuestions();
-    this.handleTimer();
   }
 
-  fetchQuestions = async () => {
-    const { history } = this.props;
+  validateLogin = () => {
+    const { email, name, history } = this.props;
     const token = localStorage.getItem('token');
+    const isEmailValid = email.length > 0;
+    const isNameValid = name.length > 0;
+    const isLoginValid = isEmailValid && isNameValid;
 
-    if (!token) {
+    if (!(token && isLoginValid)) {
+      history.push('/');
+    }
+  };
+
+  fetchQuestions = async () => {
+    const { dispatch, history } = this.props;
+    const RESPONSE_CODE = 3;
+    const token = localStorage.getItem('token');
+    const questionsData = await fetchQuestionsFromAPI(token);
+
+    if (questionsData.response_code === RESPONSE_CODE) {
       history.push('/');
     } else {
-      const API_URL = `https://opentdb.com/api.php?amount=5&token=${token}`;
-      const RESPONSE_CODE = 3;
-      const response = await fetch(API_URL);
-      const data = await response.json();
+      const questions = questionsData.results;
 
-      if (data.response_code === RESPONSE_CODE) {
-        localStorage.removeItem('token');
-        history.push('/');
-      } else {
-        const questions = data.results;
+      dispatch(setGameAnsweredAction(false));
 
-        this.setState(() => ({
-          questions,
-          questionIndex: 0,
-          isAnswered: false,
-        }), () => {
-          this.shuffleAnswers();
-        });
-      }
+      this.setState(() => ({
+        questions,
+        questionIndex: 0,
+      }), () => {
+        this.shuffleAnswers();
+        dispatch(setTimerRefreshAction(true));
+      });
     }
   };
 
   shuffleAnswers = () => {
     const { questions, questionIndex } = this.state;
     const question = questions[questionIndex];
-    const answers = (question)
+    const questionAnswers = (question)
       ? [...question.incorrect_answers, question.correct_answer]
       : [];
 
-    const RANDOM_INCREMENT = 0.5;
-    const shuffledAnswers = answers.sort(() => Math.random() - RANDOM_INCREMENT);
+    const RANDOMIZER_INCREMENT = 0.5;
+    const answers = questionAnswers.sort(() => Math.random() - RANDOMIZER_INCREMENT);
 
-    this.setState({
-      shuffledAnswers,
-    });
-  };
-
-  handleTimer = () => {
-    const { timerId } = this.state;
-
-    if (timerId) {
-      clearInterval(timerId);
-      this.setState({ timerId: null });
-    }
-
-    this.setState({
-      timerDuration: 30,
-      isAnswered: false,
-    }, () => {
-      const INTERVAL_INCREMENT = 1000;
-
-      const intervalId = setInterval(() => {
-        const { timerDuration } = this.state;
-
-        if (timerDuration > 0) {
-          this.setState((prevState) => ({
-            timerDuration: prevState.timerDuration - 1,
-          }));
-        } else {
-          clearInterval(intervalId);
-
-          this.setState({
-            timerId: null,
-            timerDuration: 0,
-            isAnswered: true,
-          });
-        }
-      }, INTERVAL_INCREMENT);
-
-      this.setState({
-        timerId: intervalId,
-      });
-    });
+    this.setState({ answers });
   };
 
   handleAnswer = ({ target }) => {
-    const {
-      questions,
-      timerId,
-      questionIndex,
-    } = this.state;
-
+    const { questions, questionIndex } = this.state;
+    const { dispatch, score, assertions, timerId, timerDuration } = this.props;
     const question = questions[questionIndex];
 
     if (timerId) {
       clearInterval(timerId);
-      this.setState({ timerId: null, timerDuration: 0 });
+      dispatch(resetTimerAction());
     }
 
     if (question && target.id === 'correct-answer') {
-      const { timerDuration } = this.state;
-      const { dispatch, score, assertions } = this.props;
       const SCORE_INCREMENT = 10;
       const difficulties = { easy: 1, medium: 2, hard: 3 };
       const difficulty = difficulties[question.difficulty];
       const newScore = score + (SCORE_INCREMENT + (timerDuration * difficulty));
 
       dispatch(setScoreAction(newScore));
-      dispatch(setassertionsAction(assertions + 1));
+      dispatch(setAssertionsAction(assertions + 1));
     }
 
-    this.setState({
-      isAnswered: true,
-    });
+    dispatch(setGameAnsweredAction(true));
   };
 
   handleNext = () => {
-    const { questions, questionIndex, isAnswered } = this.state;
+    const { questions, questionIndex } = this.state;
+    const { dispatch, gameAnswered } = this.props;
     const lastQuestionIndex = questions.length - 1;
 
     if (questionIndex === lastQuestionIndex) {
       const { history } = this.props;
       history.push('/feedback');
-    } else if (isAnswered) {
+    } else if (gameAnswered) {
       this.setState((prevState) => ({
         questionIndex: prevState.questionIndex + 1,
-        isAnswered: false,
       }), () => {
         this.shuffleAnswers();
-        this.handleTimer();
+        dispatch(setGameAnsweredAction(false));
+        dispatch(setTimerRefreshAction(true));
       });
     }
   };
 
   render() {
-    const {
-      questions,
-      shuffledAnswers,
-      timerDuration,
-      questionIndex,
-      isAnswered,
-    } = this.state;
-
-    const FIXED_NUMBER = 10;
+    const { questions, answers, questionIndex } = this.state;
+    const { gameAnswered } = this.props;
     const question = questions[questionIndex];
-    const formattedTimerDuration = (timerDuration < FIXED_NUMBER)
-      ? `0${timerDuration}`
-      : timerDuration;
+    const lastQuestionIndex = questions.length - 1;
 
     return (
       <div className="game">
@@ -172,22 +133,20 @@ class Game extends Component {
         {
           (question)
           && (
-            <>
-              <div className="question-category">
+            <div>
+              <div>
                 <h1 data-testid="question-category">{ question.category }</h1>
               </div>
 
-              <div className="question-text">
+              <div>
                 <h2 data-testid="question-text">{ question.question }</h2>
               </div>
 
-              <div>
-                <h3>{ formattedTimerDuration }</h3>
-              </div>
+              <Timer />
 
               <div data-testid="answer-options">
                 {
-                  shuffledAnswers
+                  answers
                     .map((answer, answerIndex) => {
                       const answerId = (answer === question.correct_answer)
                         ? 'correct-answer'
@@ -202,8 +161,8 @@ class Game extends Component {
                           data-testid={ answerId }
                           key={ answerIndex }
                           id={ answerId }
-                          className={ (isAnswered) ? answerClassName : '' }
-                          disabled={ isAnswered }
+                          className={ (gameAnswered) ? answerClassName : '' }
+                          disabled={ gameAnswered }
                           onClick={ this.handleAnswer }
                         >
                           { answer }
@@ -214,17 +173,21 @@ class Game extends Component {
               </div>
 
               {
-                (isAnswered)
+                (gameAnswered)
                 && (
                   <button
                     data-testid="btn-next"
                     onClick={ this.handleNext }
                   >
-                    Próxima
+                    {
+                      (questionIndex === lastQuestionIndex)
+                        ? 'Feedback'
+                        : 'Próxima pergunta'
+                    }
                   </button>
                 )
               }
-            </>
+            </div>
           )
         }
       </div>
@@ -232,18 +195,28 @@ class Game extends Component {
   }
 }
 
-const mapStateToProps = ({ player }) => {
-  const { score, assertions } = player;
-  return { score, assertions };
+const mapStateToProps = ({ player, game }) => {
+  const { email, name, score, assertions } = player;
+  const { timerId, timerDuration, gameAnswered } = game;
+  return { email, name, score, assertions, timerId, timerDuration, gameAnswered };
 };
 
 Game.propTypes = {
   dispatch: PropTypes.func.isRequired,
+  email: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
   score: PropTypes.number.isRequired,
   assertions: PropTypes.number.isRequired,
+  timerId: PropTypes.number,
+  timerDuration: PropTypes.number.isRequired,
+  gameAnswered: PropTypes.bool.isRequired,
   history: PropTypes.shape({
     push: PropTypes.func.isRequired,
   }).isRequired,
+};
+
+Game.defaultProps = {
+  timerId: null,
 };
 
 export default connect(mapStateToProps)(Game);

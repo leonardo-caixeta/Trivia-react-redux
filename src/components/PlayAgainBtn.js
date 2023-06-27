@@ -7,12 +7,8 @@ export default class PlayAgainBtn extends Component {
     return (
       <div>
         <Link to="/">
-          <button
-            data-testid="btn-go-home"
-
-          >
-            Jogar novamente
-
+          <button data-testid="btn-go-home">
+            Play again
           </button>
         </Link>
       </div>

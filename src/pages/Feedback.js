@@ -4,6 +4,10 @@ import PropTypes from 'prop-types';
 import Header from '../components/Header';
 
 class Feedback extends Component {
+  componentDidMount() {
+    this.setPlayerInLocalStorage();
+  }
+
   handleRanking = () => {
     const { history } = this.props;
     history.push('/ranking');
@@ -12,6 +16,19 @@ class Feedback extends Component {
   handleRestart = () => {
     const { history } = this.props;
     history.push('/');
+  };
+
+  setPlayerInLocalStorage = () => {
+    const { name, score } = this.props;
+    const oldPlayerScore = JSON.parse(localStorage.getItem('playerScore')) || [];
+    const newPlayerScore = [
+      ...oldPlayerScore,
+      {
+        name,
+        score,
+      }];
+
+    localStorage.setItem('playerScore', JSON.stringify(newPlayerScore));
   };
 
   render() {
@@ -49,7 +66,7 @@ class Feedback extends Component {
           data-testid="btn-play-again"
           onClick={ this.handleRestart }
         >
-          Jogar novamente
+          Play again
         </button>
       </div>
     );
@@ -57,11 +74,12 @@ class Feedback extends Component {
 }
 
 const mapStateToProps = ({ player }) => {
-  const { score, assertions } = player;
-  return { score, assertions };
+  const { name, score, assertions } = player;
+  return { name, score, assertions };
 };
 
 Feedback.propTypes = {
+  name: PropTypes.string.isRequired,
   score: PropTypes.number.isRequired,
   assertions: PropTypes.number.isRequired,
   history: PropTypes.shape({
