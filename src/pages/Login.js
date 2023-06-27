@@ -1,23 +1,28 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { setEmailAction,
-  setNameAction,
-  setScoreAction,
-  setassertionsAction } from '../redux/actions/index';
+import { setEmailAction, setNameAction, resetPlayerAction } from '../redux/actions/index';
+import { fetchTokenFromAPI } from '../services/triviaAPI';
 
 class Login extends Component {
   state = {
-    userEmail: '',
-    userName: '',
+    email: '',
+    name: '',
     isDisabled: true,
   };
 
+  componentDidMount() {
+    const { dispatch } = this.props;
+
+    localStorage.removeItem('token');
+    dispatch(resetPlayerAction());
+  }
+
   validateLogin = () => {
-    const { userEmail, userName } = this.state;
-    const isUserEmailValid = userEmail.length > 0;
-    const isUserNameValid = userName.length > 0;
-    const isLoginValid = isUserEmailValid && isUserNameValid;
+    const { email, name } = this.state;
+    const isEmailValid = email.length > 0;
+    const isNameValid = name.length > 0;
+    const isLoginValid = isEmailValid && isNameValid;
     const isDisabled = !isLoginValid;
 
     this.setState({
@@ -38,22 +43,18 @@ class Login extends Component {
   handleSubmit = async (event) => {
     event.preventDefault();
 
-    const API_URL = 'https://opentdb.com/api_token.php?command=request';
-    const response = await fetch(API_URL);
-    const { token } = await response.json();
-    const { userEmail, userName } = this.state;
+    const { email, name } = this.state;
     const { history, dispatch } = this.props;
+    const token = await fetchTokenFromAPI();
 
-    dispatch(setEmailAction(userEmail));
-    dispatch(setNameAction(userName));
-    dispatch(setassertionsAction(0));
-    dispatch(setScoreAction(0));
+    dispatch(setEmailAction(email));
+    dispatch(setNameAction(name));
     localStorage.setItem('token', token);
     history.push('/game');
 
     this.setState({
-      userEmail: '',
-      userName: '',
+      email: '',
+      name: '',
     });
   };
 
@@ -62,53 +63,50 @@ class Login extends Component {
     const { history } = this.props;
 
     return (
-      <>
+      <div>
         <form onSubmit={ this.validateLogin }>
           <input
             data-testid="input-gravatar-email"
             type="email"
-            name="userEmail"
-            placeholder="e-mail"
-            onChange={ this.handleChange }
+            name="email"
+            placeholder="Type your email here..."
+            onInput={ this.handleChange }
           />
 
           <input
             data-testid="input-player-name"
             type="text"
-            name="userName"
-            placeholder="Digite seu nome"
-            onChange={ this.handleChange }
+            name="name"
+            placeholder="Type your name here..."
+            onInput={ this.handleChange }
           />
 
           <button
             data-testid="btn-play"
             type="submit"
-            name="submit-btn"
             disabled={ isDisabled }
             onClick={ this.handleSubmit }
           >
             Play
           </button>
-
         </form>
 
         <button
           data-testid="btn-settings"
-          type="button"
           onClick={ () => history.push('/settings') }
         >
           Settings
         </button>
-      </>
+      </div>
     );
   }
 }
 
 Login.propTypes = {
+  dispatch: PropTypes.func.isRequired,
   history: PropTypes.shape({
     push: PropTypes.func.isRequired,
   }).isRequired,
-  dispatch: PropTypes.func.isRequired,
 };
 
 export default connect()(Login);

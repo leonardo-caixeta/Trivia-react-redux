@@ -5,10 +5,10 @@ class Ranking extends Component {
   sortRanking = () => {
     const playerScore = JSON.parse(localStorage.getItem('playerScore'));
     const sorterPlayerScore = playerScore.sort((a, b) => b.score - a.score);
-    // const sorterPlayerName = sorterPlayerScore.sort((a, b) => b.name - a.name);
+
     return sorterPlayerScore.map((player, index) => (
       <div key={ index }>
-        <p data-testid={ `player-name-${index}` }>{player.playerName}</p>
+        <p data-testid={ `player-name-${index}` }>{player.name}</p>
         <p data-testid={ `player-score-${index}` }>{player.score}</p>
       </div>
     ));

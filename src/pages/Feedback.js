@@ -19,15 +19,15 @@ class Feedback extends Component {
   };
 
   setPlayerInLocalStorage = () => {
-    const { score, name, gravatarEmail } = this.props;
+    const { name, score } = this.props;
     const oldPlayerScore = JSON.parse(localStorage.getItem('playerScore')) || [];
     const newPlayerScore = [
       ...oldPlayerScore,
       {
-        playerName: name,
-        playerEmail: gravatarEmail,
+        name,
         score,
       }];
+
     localStorage.setItem('playerScore', JSON.stringify(newPlayerScore));
   };
 
@@ -66,7 +66,7 @@ class Feedback extends Component {
           data-testid="btn-play-again"
           onClick={ this.handleRestart }
         >
-          Jogar novamente
+          Play again
         </button>
       </div>
     );
@@ -74,13 +74,12 @@ class Feedback extends Component {
 }
 
 const mapStateToProps = ({ player }) => {
-  const { score, assertions, name, gravatarEmail } = player;
-  return { score, assertions, name, gravatarEmail };
+  const { name, score, assertions } = player;
+  return { name, score, assertions };
 };
 
 Feedback.propTypes = {
   name: PropTypes.string.isRequired,
-  gravatarEmail: PropTypes.string.isRequired,
   score: PropTypes.number.isRequired,
   assertions: PropTypes.number.isRequired,
   history: PropTypes.shape({

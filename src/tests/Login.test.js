@@ -1,5 +1,5 @@
 import React from 'react';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithRouterAndRedux } from './helpers/renderWithRouterAndRedux';
 import App from '../App';
@@ -33,7 +33,7 @@ describe('Testes para o componente `Login`', () => {
     const emailInput = screen.getByTestId(EMAIL_INPUT);
     const buttonInput = screen.getByTestId(BUTTON_INPUT);
 
-    userEvent.type(emailInput, EMAIL);
+    act(() => userEvent.type(emailInput, EMAIL));
     expect(emailInput).toHaveValue(EMAIL);
     expect(buttonInput).toBeDisabled();
   });
@@ -44,7 +44,7 @@ describe('Testes para o componente `Login`', () => {
     const nameInput = screen.getByTestId(NAME_INPUT);
     const buttonInput = screen.getByTestId(BUTTON_INPUT);
 
-    userEvent.type(nameInput, NAME);
+    act(() => userEvent.type(nameInput, NAME));
     expect(nameInput).toHaveValue(NAME);
     expect(buttonInput).toBeDisabled();
   });
@@ -67,20 +67,22 @@ describe('Testes para o componente `Login`', () => {
       json: jest.fn().mockResolvedValue(API_RESPONSE),
     });
 
-    userEvent.type(emailInput, EMAIL);
-    userEvent.type(nameInput, NAME);
+    act(() => userEvent.type(emailInput, EMAIL));
+    act(() => userEvent.type(nameInput, NAME));
     expect(emailInput).toHaveValue(EMAIL);
     expect(nameInput).toHaveValue(NAME);
     expect(buttonInput).toBeEnabled();
-    userEvent.click(buttonInput);
+    act(() => userEvent.click(buttonInput));
 
     await waitFor(() => {
       expect(store.getState().player).toEqual({
         email: EMAIL,
         name: NAME,
+        score: 0,
+        assertions: 0,
       });
 
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
       expect(global.fetch).toHaveBeenCalledWith(API_URL);
       expect(localStorage.getItem('token')).toBe(API_RESPONSE.token);
       expect(history.location.pathname).toBe('/game');
@@ -91,7 +93,7 @@ describe('Testes para o componente `Login`', () => {
     const { history } = renderWithRouterAndRedux(<App />);
     const settingsInput = screen.getByTestId(SETTINGS_INPUT);
 
-    userEvent.click(settingsInput);
+    act(() => userEvent.click(settingsInput));
     expect(history.location.pathname).toBe('/settings');
   });
 });

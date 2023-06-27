@@ -3,30 +3,28 @@ import {
   SET_NAME,
   SET_SCORE,
   SET_ASSERTIONS,
+  RESET_PLAYER,
 } from '../actions/index';
 
-// muda o nome das propriedades do estado global player,
-// adequando conforme especificações do readme
-
 const INITIAL_STATE = {
+  email: '',
   name: '',
-  gravatarEmail: '',
   score: 0,
   assertions: 0,
 };
 
 const player = (state = INITIAL_STATE, action) => {
   switch (action.type) {
+  case SET_EMAIL:
+    return {
+      ...state,
+      email: action.payload,
+    };
+
   case SET_NAME:
     return {
       ...state,
       name: action.payload,
-    };
-
-  case SET_EMAIL:
-    return {
-      ...state,
-      gravatarEmail: action.payload,
     };
 
   case SET_SCORE:
@@ -39,6 +37,14 @@ const player = (state = INITIAL_STATE, action) => {
     return {
       ...state,
       assertions: action.payload,
+    };
+
+  case RESET_PLAYER:
+    return {
+      email: '',
+      name: '',
+      score: 0,
+      assertions: 0,
     };
 
   default:
